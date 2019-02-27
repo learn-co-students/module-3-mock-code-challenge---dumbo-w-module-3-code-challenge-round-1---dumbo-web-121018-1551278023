@@ -8,45 +8,33 @@ document.addEventListener('DOMContentLoaded', () => {
   const likeURL = `https://randopic.herokuapp.com/likes/`
 
   const commentsURL = `https://randopic.herokuapp.com/comments/`
+  displayData(imageURL)
+  // addLike(likeURL)
+})
 
-  function getData() {
-    return fetch(imageURL)
-    .then(resp => resp.json())
-    .then(data => renderData(data))
-  }
+function getData(imageURL) {
+  return fetch(imageURL)
+  .then(resp => resp.json())
+}
 
-  function postLike(imgId, likeCount) {
-    fetch(likeURL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
-      },
-      body: JSON.stringify({image_id: imgId, like_count: likeCount})
-    })
-  }
+function addLike(imageId, likeCount) {
+  fetch("https://randopic.herokuapp.com/likes/", {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
+    },
+    body: JSON.stringify({image_id: imageId, like_count: likeCount})
+  })
+  .then(resp => resp.json)
+  .then(json => renderAddLike(json))
+}
 
-  function postComment(imgId, inputVal) {
-    fetch(commentsURL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
-      },
-      body: JSON.stringify({
-        content: inputVal,
-        image_id: imgId
-      })
-    })
-  }
-
-  getData()
-
-  function renderData(data) {
-    console.dir(data);
-    const imgUrl = data.url
+function displayData(imageURL) {
+  const getPromise = getData(imageURL)
+  getPromise.then(data => {
     const imgTag = document.getElementById('image')
-    imgTag.src = imgUrl
+    imgTag.src = data.url
     imgTag.dataset.id = data.id
 
     const imgName = document.getElementById('name')
@@ -55,38 +43,44 @@ document.addEventListener('DOMContentLoaded', () => {
     const imgLikes = document.getElementById('likes')
     imgLikes.innerHTML = data.like_count
 
-    const imgComments = document.getElementById('comments')
-    data.comments.forEach(com => {
-      const comLi = document.createElement('li')
-      comLi.innerHTML = com.content
-      imgComments.append(comLi)
-    })
-
     const likeButton = document.getElementById('like_button')
-    likeButton.dataset.id = data.id
-    likeButton.addEventListener('click', function handleAddLike(event) {
-      event.preventDefault()
-      const imgId = event.target.dataset.id
-      const likeCount = data.like_count += 1
+    likeButton.addEventListener("click", handleAddLike)
 
-      imgLikes.innerHTML = data.like_count
+    displayComments(data)
+  })
+}
 
-      postLike(imgId, likeCount)
-    })
+function displayComments(data) {
+  const imgComments = document.getElementById('comments')
+  data.comments.forEach(com => {
+    const commentLi = document.createElement('li')
+    commentId = com.id
+    commentLi.dataset.commentId = commentId
+    commentLi.innerText = com.content
 
-    const commentForm = document.getElementById('comment_form')
-    const commentUl = document.getElementById('comments')
+    const deleteButton = document.createElement('button')
+    deleteButton.innerText = "Delete"
+    deleteButton.addEventListener("click", handleDeleteComment)
 
-    commentForm.addEventListener('submit', function handleAddComment(event) {
-      event.preventDefault()
-      const commentLi = document.createElement('li')
+    commentLi.append(deleteButton)
+    imgComments.append(commentLi)
+  })
+}
 
-      const inputVal = commentForm.elements[0].value
-      commentLi.innerHTML = inputVal
-      commentUl.append(commentLi)
+function handleAddLike(event) {
+  let likeCount = event.target.parentElement.querySelector('#likes').innerText
 
-      postComment(imageId, inputVal)
-      commentForm.reset()
-    })
-  }
-})
+  const imgId = event.target.parentElement.querySelector('#image').dataset.id
+
+  addLike(imgId, likeCount)
+}
+
+function renderAddLike(json) {
+  // const imgLikes = document.getElementById('likes')
+  // imgLikes.innerText += 1
+  console.log(json);
+}
+
+function handleDeleteComment(event) {
+  console.log(event);
+}
