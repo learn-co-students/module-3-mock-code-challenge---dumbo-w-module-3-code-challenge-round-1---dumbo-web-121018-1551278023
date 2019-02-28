@@ -50,8 +50,6 @@ function deleteComment(commentId) {
   fetch(`${commentsURL}/${commentId}`, {
     method: 'DELETE'
   })
-  .then(resp => resp.json())
-  .then(json => console.log(json))
 }
 
 function displayData(json) {
